@@ -1,0 +1,180 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+using System.IO;
+
+namespace renshi
+{
+    
+
+    public partial class 添加员工管理 : Form
+    {
+      
+        public 添加员工管理()
+        {
+           
+            InitializeComponent();
+        }
+
+        //实现窗体间的传值
+        string fileName = "";
+        public string action = "";
+    
+        
+
+        private void 保存_ButtonClick(object sender, EventArgs e)
+        {
+            if (action == "add")
+            {
+                //点击添加时
+                string str = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+                SqlConnection conn = new SqlConnection(str);
+                conn.Open();
+                string strsql = string.Format("insert into tb_employee(employeeID,employeeName,employeeSex,employeeDept ,employeeBirthday ,employeeNation ,employeeMarriage ,employeeDuty,employeePhone,employeeAccession ,employeePay,employeePhoto) values('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}',@employeePhoto)", textBox1.Text, textBox4.Text, comboBox1.Text, comboBox3.Text, dateTimePicker1.Text, comboBox4.Text, comboBox2.Text, comboBox5.Text, textBox2.Text, dateTimePicker2.Text, textBox3.Text);
+              
+                FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read);     //创建文件流对象       
+                BinaryReader br = new BinaryReader(fs);        //创建二进制流对象
+                byte[] image = br.ReadBytes((int)fs.Length);      //得到字节数组
+                SqlCommand sqlcmd = new SqlCommand(strsql, conn);
+                SqlParameter sqlpm = new SqlParameter("@employeePhoto", SqlDbType.Binary);     //添加参数并赋值
+                sqlpm.Value = image;
+                sqlcmd.Parameters.Add(sqlpm);      //添加AddInfo方法，实现将图像文件转换成二进制数据并把二进制数据存到数据库中
+                int result = sqlcmd.ExecuteNonQuery();
+                if (result > 0)
+                {
+                    MessageBox.Show("数据保存成功!");
+                }
+                conn.Close();
+            }
+         
+            else {
+
+                 if (fileName == "")
+                 {
+                     string str = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+                     using (SqlConnection conn = new SqlConnection(str))        //自动释放，不需要手动关闭数据库连接
+                     {
+                         conn.Open();
+                         string sqlstr = string.Format("update tb_employee set employeeDept='" + comboBox3.Text + "',employeeMarriage='" + comboBox2.Text + "',employeeDuty='" + comboBox5.Text + "',employeePhone='" + textBox2.Text + "',employeePay='" + textBox3.Text + "' where employeeID='" + textBox1.Text + "'");
+                         DataSet ds = new DataSet();
+                         SqlDataAdapter da = new SqlDataAdapter(sqlstr, conn);
+                         da.Fill(ds);
+                         MessageBox.Show("数据更新成功！");
+                     }
+                 }
+                 else { 
+                 
+                     string str = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+                     SqlConnection conn = new SqlConnection(str);
+                     conn.Open();
+                     string sqlstr = string.Format("update tb_employee set employeeDept='" + comboBox3.Text + "',employeeMarriage='" + comboBox2.Text + "',employeeDuty='" + comboBox5.Text + "',employeePhone='" + textBox2.Text + "',employeePay='" + textBox3.Text + "' where employeeID='" + textBox1.Text + "'");
+                     DataSet ds = new DataSet();
+                     SqlDataAdapter da = new SqlDataAdapter(sqlstr ,conn );
+                     da.Fill(ds  );
+                     conn.Close();
+                 }        
+            }
+        }
+    
+        private  void Form2_Load(object sender, EventArgs e)
+        {
+            /*
+             * 从数据库中获取所属部门并显示在combobox控件中 
+             */
+            string str = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+            SqlConnection conn = new SqlConnection(str);
+            conn.Open();
+            string strsql = string.Format("select*from tb_department");
+            SqlDataAdapter da = new SqlDataAdapter(strsql, conn);
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            conn.Close();
+            comboBox3.DataSource = ds.Tables[0];
+            comboBox3.DisplayMember = "DepName";
+            comboBox3.ValueMember = "id";
+            /* 
+             * 从数据库中获取职务并显示在combobox控件中
+             */
+            string str1 = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+            SqlConnection conn1 = new SqlConnection(str1);
+            conn1.Open();
+            string strsql1 = string.Format("select*from tb_userJob");
+            SqlDataAdapter da1 = new SqlDataAdapter(strsql1, conn1);
+            DataSet ds1 = new DataSet();
+            da1.Fill(ds1);
+            conn1.Close();
+            comboBox5.DataSource = ds1.Tables[0];
+            comboBox5.DisplayMember = "JobName";
+            comboBox5.ValueMember = "id";
+            if (action != "add")
+            {
+                textBox4.Text = this.Flag;
+                //点击修改时出现带有内容的部分控件
+                //修改员工信息时，部分信息不需要更新
+                textBox1.Enabled = false;           //员工编号
+                textBox4.Enabled =false ;           //员工姓名
+                comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;        //员工性别
+                comboBox4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;          //民族
+                //确定修改对象
+                string str2 = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+                SqlConnection conn2 = new SqlConnection(str2);
+                conn2.Open();          
+                string sqlstr2 = string.Format("select * from tb_employee where employeeName='" + textBox4.Text + "'");
+                DataSet ds2 = new DataSet();
+                SqlDataAdapter da2 = new SqlDataAdapter(sqlstr2, conn2);
+                da2.Fill(ds2);
+                conn2.Close();
+                if (ds2.Tables[0].Rows.Count > 0)
+                {
+                    textBox1.Text = ds2.Tables[0].Rows[0][1].ToString();     //员工编号
+                    textBox4.Text = ds2.Tables[0].Rows[0][2].ToString();     //员工姓名
+                    comboBox1.Text = ds2.Tables[0].Rows[0][3].ToString();     //员工性别
+                    dateTimePicker1.Text = ds2.Tables[0].Rows[0][5].ToString();     //出生日期
+                    comboBox4.Text = ds2.Tables[0].Rows[0][6].ToString();     //所属民族
+                    dateTimePicker2.Text = ds2.Tables[0].Rows[0][10].ToString();     //就职日期
+                    //员工头像
+                     byte[] image = null;
+                    image = (byte[])ds2.Tables[0].Rows[0][11];     //获取用户头像
+                    if (image == null)
+                    {
+                        conn2.Close();
+                        return;
+                    }
+                    MemoryStream ms = new MemoryStream(image);
+                    Bitmap bt = new Bitmap(ms);
+                    pictureBox1.Image = bt;
+                }
+            }
+        } 
+        private void toolStripSplitButton2_ButtonClick(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+        public string Flag { get; set; }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            string str = "Data Source=.;Initial Catalog=db_PMS;Persist Security Info=True;User ID=sa;Password=123";
+            SqlConnection conn = new SqlConnection(str);
+            conn.Open();
+            OpenFileDialog open = new OpenFileDialog();
+            if (open.ShowDialog() == DialogResult.OK)
+            {
+                pictureBox1.Image = Image.FromFile(open.FileName);
+                fileName = open.FileName;
+            }
+            conn.Close();         
+        }
+        private void toolStripSplitButton2_ButtonClick_1(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+    }
+}
