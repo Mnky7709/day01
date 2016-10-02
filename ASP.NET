@@ -1,0 +1,36 @@
+# day01
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="Default.aspx.cs" Inherits="_Default" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>九九乘法表</title>
+</head>
+<body background="308.jpg">
+    <form id="form1" runat="server">
+    <div>
+       <font size="5px">
+      <%  
+        for (int i = 1; i <= 9; i++){
+          for (int j = 1; j <= i; j++){
+              if (i * j > 9){
+                  string str = string.Format(j.ToString() + "*" + i.ToString() + "=" + (i * j)
+                      .ToString() + "  ");
+                  Response.Write(str);
+              }
+              else{
+                  string str = string.Format(j.ToString() + "*" + i.ToString() + "=" + (i * j)
+                      .ToString() +"&nbsp");
+                  Response.Write(str);
+              }       
+          }
+          Response.Write("<br />"); 
+        }
+       %>
+        </font> 
+    </div>
+    </form>
+</body>
+</html>
